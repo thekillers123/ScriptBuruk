@@ -74,6 +74,8 @@ wget http://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/ins-vt.sh && chmo
 #install L2TP
 wget https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/ipsec.sh && chmod +x ipsec.sh && screen -S ipsec ./ipsec.sh
 wget https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/set-br.sh && chmod +x set-br.sh && ./set-br.sh
+#install Xray
+wget https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/xray.sh && chmod +x xray.sh && screen -S xray ./xray.sh
 
 rm -f /root/ssh-vpn.sh
 rm -f /root/sstp.sh
@@ -83,6 +85,7 @@ rm -f /root/ssr.sh
 rm -f /root/ins-vt.sh
 rm -f /root/ipsec.sh
 rm -f /root/set-br.sh
+rm -f /root/xray.sh
 cat <<EOF> /etc/systemd/system/autosett.service
 [Unit]
 Description=autosetting
