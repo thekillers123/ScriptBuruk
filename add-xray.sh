@@ -11,6 +11,7 @@ domain=$(cat /etc/v2ray/domain)
 else
 domain=$IP
 fi
+
 	clear
 	echo -e "Add Xray User"
 	echo -e "-------------"
@@ -21,12 +22,12 @@ fi
 		echo -e ""
 		exit 0
 	fi
-	read -p "Duration (day) : " duration
+	read -p "Expired (days): " masaaktif
 
-	uuid=$(uuidgen)
+	uuid=$(cat /proc/sys/kernel/random/uuid)
 	exp=$(date -d +${duration}days +%Y-%m-%d)
 	expired=$(date -d "${exp}" +"%d %b %Y")
-	domain=$(cat /usr/local/etc/xray/domain)
+	domain=$(cat /etc/v2ray/domain)
 	email=${user}@${domain}
 	echo -e "${user}\t${uuid}\t${exp}" >> /etc/xray/xray-clients.txt
 
@@ -37,9 +38,8 @@ fi
 	service xray restart
 	clear
 	uuid=$(cat /etc/xray/xray-clients.txt | grep -w "$user" | awk '{print $2}')
-	domain=$(cat /usr/local/etc/xray/domain)
+	domain=$(cat /etc/v2ray/domain)
 	exp=$(cat /etc/xray/xray-clients.txt | grep -w "$user" | awk '{print $3}')
-	exp_date=$(date -d"${exp}" "+%d %b %Y")
 
 	clear
 	echo -e "Expired : $exp_date"
