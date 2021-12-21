@@ -1,29 +1,45 @@
 #!/bin/bash
-red='\e[1;31m'
-green='\e[0;32m'
-NC='\e[0m'
-MYIP=$(wget -qO- icanhazip.com);
-echo "Checking VPS"
+NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray-mini/vless-direct.json")
+	if [[ ${NUMBER_OF_CLIENTS} == '0' ]]; then
+		echo ""
+		echo "You have no existing clients!"
+		exit 1
+	fi
+
+	clear
+	echo ""
+	echo " Select the existing client you want to remove"
+	echo " Press CTRL+C to return"
+	echo " ==============================="
+	echo "     No  Expired   User"
+	grep -E "^### " "/etc/xray-mini/vless-direct.json" | cut -d ' ' -f 2-3 | nl -s ') '
+	until [[ ${CLIENT_NUMBER} -ge 1 && ${CLIENT_NUMBER} -le ${NUMBER_OF_CLIENTS} ]]; do
+		if [[ ${CLIENT_NUMBER} == '1' ]]; then
+			read -rp "Select one client [1]: " CLIENT_NUMBER
+		else
+			read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
+		fi
+	done
+user=$(grep -E "^### " "/etc/xray-mini/vless-direct.json" | cut -d ' ' -f 2 | sed -n "${CLIENT_NUMBER}"p)
+exp=$(grep -E "^### " "/etc/xray-mini/vless-direct.json" | cut -d ' ' -f 3 | sed -n "${CLIENT_NUMBER}"p)
+sed -i "/^### $user $exp/,/^},{/d" /etc/xray-mini/vless-direct.json
+sed -i "/^### $user $exp/,/^},{/d" /etc/xray-mini/vless-splice.json
+
+# // Restarting Service
+systemctl stop xray-mini@vless-direct
+systemctl stop xray-mini@vless-splice
+systemctl disable xray-mini@vless-direct
+systemctl disable xray-mini@vless-splice
+systemctl enable xray-mini@vless-direct
+systemctl enable xray-mini@vless-splice
+systemctl start xray-mini@vless-direct
+systemctl start xray-mini@vless-splice
+systemctl restart xray-mini@vless-direct
+systemctl restart xray-mini@vless-splice
+
 clear
-
-echo -e "Delete Xray User"
-echo -e "----------------"
-read -p "Username : " user
-echo -e ""
-if ! grep -qw "$user" /etc/xray/xray-clients.txt; then
-  echo -e ""
-  echo -e "User '$user' does not exist."
-  echo -e ""
-  exit 0
-fi
-uuid="$(cat /etc/xray/xray-clients.txt | grep -w "$user" | awk '{print $2}')"
-
-cat /usr/local/etc/xray/config.json | jq 'del(.inbounds[0].settings.clients[] | select(.id == "'${uuid}'"))' > /usr/local/etc/xray/config_tmp.json
-mv -f /usr/local/etc/xray/config_tmp.json /usr/local/etc/xray/config.json
-cat /usr/local/etc/xray/config.json | jq 'del(.inbounds[1].settings.clients[] | select(.id == "'${uuid}'"))' > /usr/local/etc/xray/config_tmp.json
-mv -f /usr/local/etc/xray/config_tmp.json /usr/local/etc/xray/config.json
-sed -i "/\b$user\b/d" /etc/xray/xray-clients.txt
-service xray restart
-
-echo -e "User '$user' deleted successfully."
-echo -e ""
+echo " XRay Account Deleted Successfully"
+echo " =========================="
+echo " Client Name : $user"
+echo " Expired On  : $exp"
+echo " =========================="

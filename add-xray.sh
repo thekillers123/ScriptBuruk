@@ -1,10 +1,4 @@
 #!/bin/bash
-red='\e[1;31m'
-green='\e[0;32m'
-NC='\e[0m'
-MYIP=$(wget -qO- icanhazip.com);
-echo "Checking VPS"
-clear
 source /var/lib/premium-script/ipvps.conf
 if [[ "$IP" = "" ]]; then
 domain=$(cat /etc/v2ray/domain)
@@ -12,60 +6,60 @@ else
 domain=$IP
 fi
 
-	clear
-	echo -e "Add Xray User"
-	echo -e "-------------"
-	read -p "Username : " user
-	if grep -qw "$user" /etc/xray/xray-clients.txt; then
-		echo -e ""
-		echo -e "User '$user' already exist."
-		echo -e ""
-		exit 0
-	fi
-	read -p "Expired (days): " masaaktif
+# // Vless
+vless1="$( cat /etc/xray-mini/vless-direct.json | grep -w port | awk '{print $2}' | sed 's/,//g' )"
+vless2="$( cat /etc/xray-mini/vless-splice.json | grep -w port | awk '{print $2}' | sed 's/,//g' )"
 
-	uuid=$(cat /proc/sys/kernel/random/uuid)
-	exp=$(date -d +${duration}days +%Y-%m-%d)
-	expired=$(date -d "${exp}" +"%d %b %Y")
-	domain=$(cat /etc/v2ray/domain)
-	email=${user}@${domain}
-	echo -e "${user}\t${uuid}\t${exp}" >> /etc/xray/xray-clients.txt
+until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
+		read -rp "User: " -e user
+		CLIENT_EXISTS=$(grep -w $user /etc/xray-mini/vless-direct.json | wc -l)
 
-	cat /usr/local/etc/xray/config.json | jq '.inbounds[0].settings.clients += [{"id": "'${uuid}'","flow": "xtls-rprx-direct","email": "'${email}'"}]' > /usr/local/etc/xray/config_tmp.json
-	mv -f /usr/local/etc/xray/config_tmp.json /usr/local/etc/xray/config.json
-	cat /usr/local/etc/xray/config.json | jq '.inbounds[1].settings.clients += [{"id": "'${uuid}'","email": "'${email}'"}]' > /usr/local/etc/xray/config_tmp.json
-	mv -f /usr/local/etc/xray/config_tmp.json /usr/local/etc/xray/config.json
-	service xray restart
-	clear
-	uuid=$(cat /etc/xray/xray-clients.txt | grep -w "$user" | awk '{print $2}')
-	domain=$(cat /etc/v2ray/domain)
-	exp=$(cat /etc/xray/xray-clients.txt | grep -w "$user" | awk '{print $3}')
+		if [[ ${CLIENT_EXISTS} == '1' ]]; then
+			echo ""
+			echo "A client with the specified name was already created, please choose another name."
+			exit 1
+		fi
+	done
 
-	clear
-	echo -e "Expired : $exp_date"
-	echo -e ""
-	echo -e "VLESS + WebSocket + TLS"
-	echo -e "-----------------------"
-	echo -e "Host : $domain"
-	echo -e "Server Port : 443"
-	echo -e "User ID : $uuid"
-	echo -e "Security : none"
-	echo -e "Network Type : ws"
-	echo -e "WebSocket Path : /xray"
-	echo -e "TLS : tls"
-	echo -e ""
-	echo -e "Link : vless://$uuid@$domain:443?type=ws&security=tls&path=%2fxray#WS_TLS-$domain"
-	echo -e ""
-	echo -e "VLESS + TLS / XTLS"
-	echo -e "------------------"
-	echo -e "Adress: $domain"
-	echo -e "Port: 443"
-	echo -e "ID: $uuid"
-	echo -e "Flow: xtls-rprx-direct"
-	echo -e "Encryption: none"
-	echo -e "Network: tcp"
-	echo -e "Head Type: none"
-	echo -e "TLS: tls / xtls"
-	echo -e ""
-	echo -e "Link : vless://$uuid@$domain:443?security=xtls&flow=xtls-rprx-direct#XTLS-$domain"
-	echo -e ""
+uuid=$(cat /proc/sys/kernel/random/uuid)
+read -p "Expired (days): " masaaktif
+exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
+
+# // Input To Server
+sed -i '/#XRay$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","flow": "xtls-rprx-direct","email": "'""$user""'"' /etc/xray-mini/vless-direct.json
+sed -i '/#XRay$/a\### '"$user $exp"'\
+},{"id": "'""$uuid""'","flow": "xtls-rprx-splice","email": "'""$user""'"' /etc/xray-mini/vless-splice.json
+
+vless_direct="vless://${uuid}@${domain}:${vless1}?security=xtls&encryption=none&headerType=none&type=tcp&flow=xtls-rprx-direct&sni=ctechdidik.xyz#$user"
+vless_splice="vless://${uuid}@${domain}:${vless1}?security=xtls&encryption=none&headerType=none&type=tcp&flow=xtls-rprx-splice&sni=ctechdidik.xyz#$user"
+
+# // Restarting Service
+systemctl stop xray-mini@vless-direct
+systemctl stop xray-mini@vless-splice
+systemctl disable xray-mini@vless-direct
+systemctl disable xray-mini@vless-splice
+systemctl enable xray-mini@vless-direct
+systemctl enable xray-mini@vless-splice
+systemctl start xray-mini@vless-direct
+systemctl start xray-mini@vless-splice
+systemctl restart xray-mini@vless-direct
+systemctl restart xray-mini@vless-splice
+
+clear
+echo -e ""
+echo -e "==========-XRAYS/VLESS-=========="
+echo -e "Remarks        : ${user}"
+echo -e "Domain         : ${domain}"
+echo -e "Port Direct    : $vless1"
+echo -e "Port Splice    : $vless1"
+echo -e "id             : ${uuid}"
+echo -e "path           : /xray"
+echo -e "================================="
+echo -e "Link Direct    : ${vless_direct}"
+echo -e "================================="
+echo -e "LInk Splice    : ${vless_splice}"
+echo -e "================================="
+echo -e "Gantikan ctechdidik.xyz dengan BUG anda"
+echo -e "================================="
+echo -e "Expired On     : $exp"
