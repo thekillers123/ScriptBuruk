@@ -5,8 +5,12 @@ NC='\e[0m'
 MYIP=$(wget -qO- icanhazip.com);
 echo "Checking VPS"
 clear
-IP=$(wget -qO- icanhazip.com);
-
+source /var/lib/premium-script/ipvps.conf
+if [[ "$IP" = "" ]]; then
+domain=$(cat /etc/v2ray/domain)
+else
+domain=$IP
+fi
 	clear
 	echo -e "Add Xray User"
 	echo -e "-------------"
