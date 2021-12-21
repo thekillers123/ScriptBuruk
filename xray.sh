@@ -28,9 +28,9 @@ systemctl restart xray
 
 cd /usr/bin
 wget -O mxray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/mxray.sh"
-wget -O add-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/mxray.sh"
-wget -O del-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/mxray.sh"
-wget -O renew-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/mxray.sh"
+wget -O add-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/add-xray.sh"
+wget -O del-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/del-xray.sh"
+wget -O renew-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/renew-xray.sh"
 wget -O cek-xray "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/cek-xray.sh"
 wget -O xray-monitor "https://raw.githubusercontent.com/XC0D3-X/ScriptBuruk/main/xray-monitor.sh"
 
